@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GeminiQTube</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'youtube-dark': '#0f0f0f',
+              'youtube-dark-secondary': '#222222',
+              'youtube-dark-tertiary': '#3f3f3f',
+              'youtube-red': '#FF0000',
+              'youtube-text-primary': '#f1f1f1',
+              'youtube-text-secondary': '#aaaaaa',
+            },
+            keyframes: {
+              'slide-in': {
+                '0%': { transform: 'translateY(100%) translateX(25%) scale(0.9)', opacity: '0' },
+                '100%': { transform: 'translateY(0) translateX(0) scale(1)', opacity: '1' },
+              },
+              'fade-in': {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              }
+            },
+            animation: {
+              'slide-in': 'slide-in 0.3s ease-out forwards',
+              'fade-in': 'fade-in 0.2s ease-out forwards',
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "node-fetch": "https://aistudiocdn.com/node-fetch@^3.3.2",
+    "@vercel/kv": "https://aistudiocdn.com/@vercel/kv@^3.0.0",
+    "youtubei.js": "https://aistudiocdn.com/youtubei.js@^16.0.1"
+  }
+}
+</script>
+</head>
+  <body class="bg-youtube-dark text-youtube-text-primary">
+    <div id="root"></div>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>

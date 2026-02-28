@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: v1.geminiqtube.api
+    env: docker
+    plan: free
+    rootDir: ./backend/v1
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+
+    region: singapore
+
+  - type: web
+    name: v2.geminiqtube.api
+    env: docker
+    plan: free
+    rootDir: ./backend/v2
+    dockerfilePath: ./Dockerfile
+
+    autoDeploy: true
+
+    region: singapore

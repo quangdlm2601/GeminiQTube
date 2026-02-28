@@ -1,0 +1,39 @@
+{
+  "name": "GeminiQTube",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "vercel:dev": "vercel dev",
+    "gen:app": "docker build -f apk.Dockerfile --platform linux/amd64 -t react-capacitor-apk . && docker run --name my_build react-capacitor-apk && docker cp my_build:/app/android/app/build/outputs/apk/debug/app-debug.apk ./output && docker rm my_build",
+    "build:backend-v1": "docker build -f backend/v1/Dockerfile -t geminiqtube-api-v1-image ./backend/v1/",
+    "run:backend-v1": "yarn build:backend-v1; docker run -p 3555:8080 --rm --name geminiqtube-api-v1 geminiqtube-api-v1-image",
+    "build:backend-v2": "docker build -f backend/v2/Dockerfile -t geminiqtube-api-v2-image ./backend/v2/",
+    "run:backend-v2": "yarn build:backend-v2; docker run -p 3001:3001 --rm --name geminiqtube-api-v2 geminiqtube-api-v2-image"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "@google/genai": "^1.28.0",
+    "@openstream/capacitor-playlist": "^0.4.0",
+    "@vercel/kv": "^2.0.0",
+    "cordova-res": "^0.15.4",
+    "node-fetch": "^2.7.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "youtube-dl-exec": "^3.0.26",
+    "youtubei.js": "^16.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.4",
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vercel": "^48.9.0",
+    "vite": "^6.2.0"
+  },
+  "packageManager": "yarn@4.10.3"
+}

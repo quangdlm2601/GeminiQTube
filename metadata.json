@@ -1,0 +1,5 @@
+{
+  "name": "GeminiQTube - A YouTube Clone",
+  "description": "A fully functional clone of the YouTube web application, powered by React, Tailwind CSS, and the Google Gemini API to generate dynamic video content, search results, and comments.",
+  "requestFramePermissions": []
+}
