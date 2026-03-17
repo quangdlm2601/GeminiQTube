@@ -63,6 +63,7 @@ const App: React.FC = () => {
   const [videos, setVideos] = useState<Video[]>([]); // For search results
   const [homeRelatedVideos, setHomeRelatedVideos] = useState<Video[]>([]);
   const [homePopularVideos, setHomePopularVideos] = useState<Video[]>([]);
+  const [homeHistorySections, setHomeHistorySections] = useState<{ query: string; videos: Video[] }[]>([]);
 
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [relatedVideos, setRelatedVideos] = useState<Video[]>([]);
@@ -202,13 +203,14 @@ const App: React.FC = () => {
     setVideos([]);
     setHomeRelatedVideos([]);
     setHomePopularVideos([]);
+    setHomeHistorySections([]);
 
     try {
       const popularPromise = getPopularVideos();
       const relatedPromise = lastWatchedVideo
         ? searchVideos(`Related to ${lastWatchedVideo.title}`, undefined, '8')
         : Promise.resolve(null);
-      
+
       const [popularResult, relatedResult] = await Promise.allSettled([popularPromise, relatedPromise]);
 
       if (popularResult.status === 'fulfilled') {
@@ -225,7 +227,24 @@ const App: React.FC = () => {
         setHomeRelatedVideos(uniqueVideos);
       } else if (relatedResult.status === 'rejected') {
         console.error("Failed to fetch related videos:", relatedResult.reason);
-        // Don't set a general error, just let the section be empty
+      }
+
+      // Load multiple sections from search history (top 3 recent searches)
+      if (searchHistory.length > 0) {
+        const historyQueries = searchHistory.slice(0, 3);
+        const historyPromises = historyQueries.map(query =>
+          searchVideos(query, undefined, '8').catch(() => ({ videos: [], nextPageToken: null }))
+        );
+
+        const historyResults = await Promise.all(historyPromises);
+        const historySections = historyResults
+          .map((result, index) => ({
+            query: historyQueries[index],
+            videos: result.videos.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i)
+          }))
+          .filter(section => section.videos.length > 0);
+
+        setHomeHistorySections(historySections);
       }
 
     } catch (err) {
@@ -234,7 +253,7 @@ const App: React.FC = () => {
     } finally {
         setIsLoading(false);
     }
-  }, [lastWatchedVideo]);
+  }, [lastWatchedVideo, searchHistory]);
 
   const fetchAndSetSearchResults = useCallback(async (query: string) => {
     window.scrollTo(0, 0);
@@ -329,15 +348,28 @@ const App: React.FC = () => {
         
         const filteredRelated = newRelated.filter(v => v.id !== video.id);
 
-        if (filteredRelated.length > 0) {
-            setRelatedVideos(filteredRelated);
+        // Helper to calculate engagement score for sorting
+        const getEngagementScore = (v: Video): number => {
+          const viewCount = parseInt(v.viewCount || '0', 10) || 0;
+          const commentCount = v.commentCount || 0;
+          // Weight: views (60%) + comments (40%) to determine relevance
+          return viewCount * 0.6 + commentCount * 1000;
+        };
+
+        // Sort by engagement metrics (views, comments) - most relevant first
+        const sortedRelated = [...filteredRelated].sort((a, b) =>
+          getEngagementScore(b) - getEngagementScore(a)
+        );
+
+        if (sortedRelated.length > 0) {
+            setRelatedVideos(sortedRelated);
             setRelatedVideosNextPageToken(newNextPageToken || null);
         } else {
             console.log("No specific related videos found. Falling back to homepage videos.");
-            
+
             // Prioritize "Recommended for you", then "Trending", then fetch fresh popular videos.
             let fallbackVideos = homeRelatedVideos.length > 0 ? homeRelatedVideos : homePopularVideos;
-            
+
             if (fallbackVideos.length === 0) {
                 console.log("Homepage videos not loaded, fetching popular videos as a fallback.");
                 try {
@@ -348,8 +380,13 @@ const App: React.FC = () => {
                     fallbackVideos = []; // Ensure it's an array on failure
                 }
             }
-            
-            setRelatedVideos(fallbackVideos.filter(v => v.id !== video.id));
+
+            const filteredFallback = fallbackVideos.filter(v => v.id !== video.id);
+            const sortedFallback = [...filteredFallback].sort((a, b) =>
+              getEngagementScore(b) - getEngagementScore(a)
+            );
+
+            setRelatedVideos(sortedFallback);
             setRelatedVideosNextPageToken(null); // Fallback list is not paginated in this context
         }
     } catch (err) {
@@ -916,6 +953,19 @@ const App: React.FC = () => {
                         />
                     </section>
                 )}
+                {homeHistorySections.map((section) => (
+                    <section key={section.query}>
+                        <h2 className="text-2xl font-bold mb-4">{section.query}</h2>
+                        <VideoList
+                            videos={section.videos}
+                            onVideoSelect={handleSelectVideo}
+                            layout="grid"
+                            isLoading={false}
+                            onAddToQueue={handleAddToQueue}
+                            onPlayMusic={(video) => handlePlayMusic(video, section.videos)}
+                        />
+                    </section>
+                ))}
                 <section>
                     <h2 className="text-2xl font-bold mb-4">Trending Now</h2>
                     <VideoList
