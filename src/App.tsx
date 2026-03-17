@@ -16,6 +16,7 @@ import { SearchOverlay } from './components/SearchOverlay';
 import { Capacitor } from '@capacitor/core';
 import { nativeAudioService } from './nativeAudioService';
 import { NativeMusicPlayer } from './components/SPMusicPlayer';
+import { useMediaSession } from './hooks/useMediaSession';
 
 
 const parseDurationToSeconds = (duration: string): number => {
@@ -755,6 +756,22 @@ const App: React.FC = () => {
         setMusicPlaylist([]);
     }
   }, [isNative]);
+
+  // Set up Media Session API for lock screen/notification controls
+  useMediaSession({
+    track: !isNative ? (currentMusicTrackIndex > -1 ? musicPlaylist[currentMusicTrackIndex] : null) : null,
+    isPlaying: isMusicPlaying,
+    onPlay: () => {
+      if (currentMusicTrackIndex > -1) {
+        setIsMusicPlaying(true);
+      }
+    },
+    onPause: () => {
+      setIsMusicPlaying(false);
+    },
+    onNext: handleNextTrack,
+    onPrev: handlePrevTrack,
+  });
 
   // Memoized values for rendering music players
   const currentMusicTrack = currentMusicTrackIndex > -1 ? musicPlaylist[currentMusicTrackIndex] : null;

@@ -8,6 +8,7 @@
 ✅ Add to Home Screen - chạy ở chế độ standalone
 ✅ Service Worker để cache và hoạt động offline
 ✅ Icons PWA chuẩn (192x192 và 512x512)
+✅ **Media Session API** - Điều khiển nhạc từ lock screen/notification/headset khi app chạy background
 
 ## Cách sử dụng
 
@@ -52,10 +53,16 @@ vercel
 
 ### 3. Sử dụng Music Player
 
+#### Trong app:
 - **Play/Pause**: Nhấn nút giữa để phát/tạm dừng
 - **Next**: Nhấn nút mũi tên phải để chuyển bài tiếp theo
 - **Back**: Nhấn nút mũi tên trái để quay lại bài trước
 - **Loop**: Khi bài hát kết thúc, app tự động chuyển sang bài tiếp theo
+
+#### Khi app chạy background (Lock Screen / Notification):
+- **Lock Screen**: Swipe down để mở notification center - sẽ thấy controls music
+- **Nút headset**: Nhấn giữa để Play/Pause, nhấn 2 lần = Next, nhấn 3 lần = Previous
+- **Notification bar**: Có thể điều khiển Play/Pause/Next/Previous từ notification tray
 
 ## Cấu trúc Files PWA
 
@@ -107,3 +114,16 @@ src/
 - Service Worker cache static assets để tăng tốc load
 - Manifest.json config cho standalone mode
 - Icons được tạo từ logo.png với kích thước chuẩn PWA
+- **Media Session API** (`useMediaSession` hook):
+  - Hiển thị metadata (tên bài, tên artist, thumbnail) trên lock screen/notification
+  - Xử lý các lệnh từ control media (play, pause, next, previous)
+  - Hoạt động khi app chạy background (PWA mode)
+  - Support headset/bluetooth controls
+
+## Cấu trúc Files PWA (bổ sung)
+
+```
+src/
+└── hooks/
+    └── useMediaSession.ts  # Hook quản lý Media Session API
+```
