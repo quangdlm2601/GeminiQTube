@@ -1001,7 +1001,23 @@ const App: React.FC = () => {
   const isMusicPlayerVisible = (!isNative && currentMusicTrack) || (isNative && currentNativeTrack);
 
   return (
-    <div className="min-h-screen bg-youtube-dark">
+    <>
+      {/* Hidden audio element for Media Session API to track */}
+      <audio
+        id="hidden-audio-player"
+        style={{ display: 'none' }}
+        onPlay={() => {
+          if (isMusicPlaying !== true) {
+            handleToggleMusicPlay();
+          }
+        }}
+        onPause={() => {
+          if (isMusicPlaying !== false) {
+            handleToggleMusicPlay();
+          }
+        }}
+      />
+      <div className="min-h-screen bg-youtube-dark">
       <Header 
         onSearch={handleHeaderSearch}
         onSearchClick={() => setIsSearchOpen(true)} 
@@ -1062,6 +1078,7 @@ const App: React.FC = () => {
           />
       )}
     </div>
+    </>
   );
 };
 

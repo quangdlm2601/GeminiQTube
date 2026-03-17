@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { Video } from '../types';
 
 interface UseMediaSessionProps {
@@ -18,8 +18,34 @@ export const useMediaSession = ({
   onNext,
   onPrev,
 }: UseMediaSessionProps) => {
+  const callbacksRef = useRef({ onPlay, onPause, onNext, onPrev });
+
+  // Update callbacks ref
+  useEffect(() => {
+    callbacksRef.current = { onPlay, onPause, onNext, onPrev };
+  }, [onPlay, onPause, onNext, onPrev]);
+
+  // Main Media Session setup
   useEffect(() => {
     if (!('mediaSession' in navigator) || !track) return;
+
+    // Get or create hidden audio element for Media Session API
+    let audioElement = document.getElementById('hidden-audio-player') as HTMLAudioElement;
+    if (!audioElement) {
+      audioElement = document.createElement('audio');
+      audioElement.id = 'hidden-audio-player';
+      audioElement.style.display = 'none';
+      document.body.appendChild(audioElement);
+    }
+
+    // Sync audio element state with player
+    if (isPlaying) {
+      audioElement.play().catch(() => {
+        console.log('Could not auto-play audio element');
+      });
+    } else {
+      audioElement.pause();
+    }
 
     // Set metadata for notification/lock screen
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -44,29 +70,49 @@ export const useMediaSession = ({
 
     // Handle media control actions
     navigator.mediaSession.setActionHandler('play', () => {
-      onPlay();
+      callbacksRef.current.onPlay();
+      audioElement.play().catch(() => {});
     });
 
     navigator.mediaSession.setActionHandler('pause', () => {
-      onPause();
+      callbacksRef.current.onPause();
+      audioElement.pause();
     });
 
     navigator.mediaSession.setActionHandler('nexttrack', () => {
-      onNext();
+      callbacksRef.current.onNext();
     });
 
     navigator.mediaSession.setActionHandler('previoustrack', () => {
-      onPrev();
+      callbacksRef.current.onPrev();
     });
 
-    // Optional: Handle seek actions
-    navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-      // Not needed for music player, but can be added if needed
-    });
+    // Update service worker with current media session state
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'UPDATE_MEDIA_SESSION',
+        data: {
+          trackId: track.id,
+          title: track.title,
+          channelName: track.channelName,
+          thumbnailUrl: track.thumbnailUrl,
+          isPlaying
+        }
+      });
+    }
 
-    navigator.mediaSession.setActionHandler('seekforward', (details) => {
-      // Not needed for music player, but can be added if needed
-    });
+    // Persist to localStorage for recovery
+    try {
+      localStorage.setItem('geminiqtube-mediaSession', JSON.stringify({
+        trackId: track.id,
+        title: track.title,
+        channelName: track.channelName,
+        thumbnailUrl: track.thumbnailUrl,
+        isPlaying
+      }));
+    } catch (e) {
+      console.log('Failed to save media session state:', e);
+    }
 
     return () => {
       // Cleanup handlers
@@ -79,5 +125,40 @@ export const useMediaSession = ({
         console.log('Error cleaning up media session', error);
       }
     };
-  }, [track, isPlaying, onPlay, onPause, onNext, onPrev]);
+  }, [track, isPlaying]);
+
+  // Listen for messages from service worker (when app is backgrounded)
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+
+    const handleMessage = (event: any) => {
+      const { type, action } = event.data;
+
+      if (type === 'MEDIA_ACTION') {
+        console.log('Received media action from SW:', action);
+        switch (action) {
+          case 'play':
+            callbacksRef.current.onPlay();
+            break;
+          case 'pause':
+            callbacksRef.current.onPause();
+            break;
+          case 'next':
+          case 'nexttrack':
+            callbacksRef.current.onNext();
+            break;
+          case 'previous':
+          case 'previoustrack':
+            callbacksRef.current.onPrev();
+            break;
+        }
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleMessage);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleMessage);
+    };
+  }, []);
 };

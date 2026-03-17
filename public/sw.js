@@ -6,6 +6,15 @@ const urlsToCache = [
   '/manifest.json'
 ];
 
+// Store media session state
+let mediaSessionState = {
+  currentTrackId: null,
+  isPlaying: false,
+  trackTitle: '',
+  channelName: '',
+  thumbnailUrl: ''
+};
+
 // Install service worker
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -66,9 +75,36 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Handle background sync for music playback
+// Handle messages from the app
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  const { type, data } = event.data;
+
+  if (type === 'SKIP_WAITING') {
     self.skipWaiting();
+  } else if (type === 'UPDATE_MEDIA_SESSION') {
+    // Update media session state when app sends new track info
+    mediaSessionState = {
+      currentTrackId: data.trackId || null,
+      isPlaying: data.isPlaying || false,
+      trackTitle: data.title || '',
+      channelName: data.channelName || '',
+      thumbnailUrl: data.thumbnailUrl || ''
+    };
+    console.log('Media session state updated:', mediaSessionState);
+  } else if (type === 'MEDIA_ACTION') {
+    // Handle media actions from lock screen/headset
+    // Broadcast the action to all active clients
+    const action = data.action; // 'play', 'pause', 'next', 'previous'
+    console.log('Handling media action:', action);
+
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'MEDIA_ACTION',
+          action: action,
+          timestamp: Date.now()
+        });
+      });
+    });
   }
 });
