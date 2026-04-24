@@ -12,6 +12,18 @@ logger = logging.getLogger("youtube_utils")
 # Paths
 STORAGE_STATE_PATH = Path(os.getenv("YTDL_STORAGE_STATE", "/app/playwright_data/storage_state.json"))
 COOKIE_TXT_PATH = Path(os.getenv("YTDL_COOKIES_TXT", "/app/playwright_data/cookies.txt"))
+
+def _seed_from_secrets():
+    """Copy secret files to working dir on first run (Render secret files are read-only)."""
+    STORAGE_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    for secret_name, dest in [("cookies.txt", COOKIE_TXT_PATH), ("storage_state.json", STORAGE_STATE_PATH)]:
+        src = Path(f"/etc/secrets/{secret_name}")
+        if src.exists() and not dest.exists():
+            import shutil
+            shutil.copy2(src, dest)
+            logger.info(f"🌱 Seeded {dest} from {src}")
+
+_seed_from_secrets()
 COOKIE_MAX_AGE = int(os.getenv("YTDL_COOKIE_MAX_AGE", 3600))  # 1h
 
 # Desktop user-agent
