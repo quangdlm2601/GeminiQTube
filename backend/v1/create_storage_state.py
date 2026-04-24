@@ -1,8 +1,9 @@
 from pathlib import Path
 import json
+import os
 
-COOKIE_TXT = Path("/app/playwright_data/cookies.txt")
-STORAGE_JSON = Path("/app/playwright_data/storage_state.json")
+COOKIE_TXT = Path(os.environ.get("COOKIE_TXT", "/app/playwright_data/cookies.txt"))
+STORAGE_JSON = Path(os.environ.get("STORAGE_JSON", "/app/playwright_data/storage_state.json"))
 
 def convert_netscape_to_storage_state(cookie_txt_path: Path, storage_json_path: Path):
     cookies = []

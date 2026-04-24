@@ -1,10 +1,11 @@
+import os
 import time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 from filelock import FileLock
 
 # === Configuration ===
-PLAYWRIGHT_DIR = Path("./playwright_data")
+PLAYWRIGHT_DIR = Path(os.environ.get("PLAYWRIGHT_DIR", "/app/playwright_data"))
 STORAGE_STATE = PLAYWRIGHT_DIR / "storage_state.json"
 LOCK_FILE = PLAYWRIGHT_DIR / "cookie_refresh.lock"
 SESSION_MAX_AGE = 60 * 60 * 24 * 7  # 1 week
