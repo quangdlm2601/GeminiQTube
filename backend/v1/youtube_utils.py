@@ -14,11 +14,11 @@ STORAGE_STATE_PATH = Path(os.getenv("YTDL_STORAGE_STATE", "/app/playwright_data/
 COOKIE_TXT_PATH = Path(os.getenv("YTDL_COOKIES_TXT", "/app/playwright_data/cookies.txt"))
 
 def _seed_from_secrets():
-    """Copy secret files to working dir on first run (Render secret files are read-only)."""
+    """Copy secret files to working dir (always overwrite if secret exists)."""
     STORAGE_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     for secret_name, dest in [("cookies.txt", COOKIE_TXT_PATH), ("storage_state.json", STORAGE_STATE_PATH)]:
         src = Path(f"/etc/secrets/{secret_name}")
-        if src.exists() and not dest.exists():
+        if src.exists():
             import shutil
             shutil.copy2(src, dest)
             logger.info(f"🌱 Seeded {dest} from {src}")

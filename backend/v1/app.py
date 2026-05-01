@@ -1,8 +1,9 @@
+import os
 import threading
 import time
 from pathlib import Path
 from flask import Flask, request, jsonify, send_file
-from youtube_utils import get_audio_url, download_video_or_audio
+from youtube_utils import get_audio_url, download_video_or_audio, COOKIE_TXT_PATH
 from refresh_cookies import refresh_cookies
 
 app = Flask(__name__)
@@ -70,4 +71,43 @@ def api_download():
 @app.route("/keep-alive", methods=["GET"])
 def keepAlive():
     return jsonify({"status": "OK"})
+
+def _check_api_key():
+    """Verify API key from header or query param. Return (bool, error_msg)"""
+    api_key = os.environ.get("COOKIE_API_KEY")
+    if not api_key:
+        return False, "COOKIE_API_KEY not configured on server"
+
+    # Check Authorization header: "Bearer <key>"
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        provided_key = auth_header[7:]
+    else:
+        # Fall back to query param
+        provided_key = request.args.get("key", "")
+
+    if not provided_key:
+        return False, "Missing API key (use header 'Authorization: Bearer <key>' or ?key=<key>)"
+
+    if provided_key != api_key:
+        return False, "Invalid API key"
+
+    return True, None
+
+@app.route("/api/cookies", methods=["GET"])
+def get_cookies():
+    """Retrieve current cookies for backup/recovery. Requires COOKIE_API_KEY."""
+    is_valid, error_msg = _check_api_key()
+    if not is_valid:
+        return jsonify({"error": error_msg}), 401
+
+    if not COOKIE_TXT_PATH.exists():
+        return jsonify({"error": "No cookies.txt found"}), 404
+
+    try:
+        with open(COOKIE_TXT_PATH, "r") as f:
+            cookies_content = f.read()
+        return jsonify({"cookies": cookies_content}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to read cookies: {str(e)}"}), 500
 
