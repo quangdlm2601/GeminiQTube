@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { create } from "youtube-dl-exec";
+import { COOKIE_TXT_PATH, hasCookies } from "../utils/cookies";
 
 // Use system-installed yt-dlp (Python version)
 const youtubedl = create("yt-dlp");
@@ -14,7 +15,7 @@ const streamHandler = async (req: Request, res: Response) => {
   try {
     const url = `https://www.youtube.com/watch?v=${videoId}`;
 
-    const videoInfo = await youtubedl(url, {
+    const options: any = {
       dumpSingleJson: true,
       noWarnings: true,
       noCheckCertificates: true,
@@ -35,7 +36,12 @@ const streamHandler = async (req: Request, res: Response) => {
 
       // Prevent YouTube throttling (50 kb/s problem)
       httpChunkSize: "10M",
-    } as any);
+
+      // Use cookies for authentication (if available)
+      ...(hasCookies() && { cookiesFile: COOKIE_TXT_PATH }),
+    };
+
+    const videoInfo = await youtubedl(url, options);
 
     const streamUrl = (videoInfo as any).url;
     const duration = (videoInfo as any).duration;
