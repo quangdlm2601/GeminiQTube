@@ -30,8 +30,8 @@ const streamHandler = async (req: Request, res: Response) => {
 
       userAgent: "com.google.android.youtube/19.09.37 (Linux; U; Android 13)",
 
-      // Best audio format with fallbacks
-      format: "bestaudio[ext=m4a]/bestaudio/best",
+      // Best audio format with extensive fallbacks (just get any audio)
+      format: "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best/b",
 
       // Prevent YouTube throttling (50 kb/s problem)
       httpChunkSize: "10M",
