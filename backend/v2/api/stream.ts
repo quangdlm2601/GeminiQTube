@@ -38,7 +38,7 @@ const streamHandler = async (req: Request, res: Response) => {
       httpChunkSize: "10M",
 
       // Use cookies for authentication (if available)
-      ...(hasCookies() && { cookiesFile: COOKIE_TXT_PATH }),
+      ...(hasCookies() && { cookies: COOKIE_TXT_PATH }),
     };
 
     const videoInfo = await youtubedl(url, options);
