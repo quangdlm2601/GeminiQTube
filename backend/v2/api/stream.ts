@@ -19,7 +19,6 @@ const streamHandler = async (req: Request, res: Response) => {
       dumpSingleJson: true,
       noWarnings: true,
       noCheckCertificates: true,
-      callHome: false,
 
       // --------- ANDROID spoof (anti 403, anti signature) ---------
       extractorArgs: {
@@ -31,8 +30,8 @@ const streamHandler = async (req: Request, res: Response) => {
 
       userAgent: "com.google.android.youtube/19.09.37 (Linux; U; Android 13)",
 
-      // Best audio format
-      format: "ba/b",
+      // Best audio format with fallbacks
+      format: "bestaudio[ext=m4a]/bestaudio/best",
 
       // Prevent YouTube throttling (50 kb/s problem)
       httpChunkSize: "10M",
